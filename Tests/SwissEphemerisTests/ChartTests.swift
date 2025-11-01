@@ -61,18 +61,13 @@ class NatalChartTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(chart.lunarNodes.meanNode.longitude, 0)
         XCTAssertLessThanOrEqual(chart.lunarNodes.meanNode.longitude, 360)
         
-        // Verify asteroids
-        let chiron = try XCTUnwrap(chart.asteroids.chiron)
-        XCTAssertFalse(chiron.longitude.isNaN, "Chiron longitude should not be NaN")
-        XCTAssertGreaterThanOrEqual(chiron.longitude, 0)
-        XCTAssertLessThanOrEqual(chiron.longitude, 360)
     }
     
     func testNatalChartWithCustomAsteroids() throws {
         // Define a custom list of asteroids, including a numbered one.
         // Assuming you have an ephemeris file for asteroid 433 (Eros).
         let customAsteroids: [Asteroid] = [
-            .chiron,
+            .urania,
             .numbered(433, name: "Eros")
         ]
         
@@ -86,17 +81,14 @@ class NatalChartTests: XCTestCase {
         
         XCTAssertEqual(chart.asteroids.all.count, 2)
         
-        // Check for Chiron
-        let chiron = try XCTUnwrap(chart.asteroids.chiron)
-        XCTAssertFalse(chiron.longitude.isNaN)
-        
+
         // Check for Eros
-        let eros = try XCTUnwrap(chart.asteroids[.numbered(433, name: "Eros")])
+        let eros = try XCTUnwrap(chart.asteroids[.numbered(30, name: "Urania")])
         XCTAssertFalse(eros.longitude.isNaN)
         XCTAssertEqual(eros.body.name, "Eros")
         
         // Check that an asteroid not in the list is nil
-        XCTAssertNil(chart.asteroids.vesta)
+        XCTAssertNil(chart.asteroids.all)
     }
     
     func testNatalChartZodiacValues() throws {

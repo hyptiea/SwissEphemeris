@@ -13,8 +13,15 @@ public struct NatalChart {
     /// The list of asteroids to include in chart calculations.
     /// Defaults to Chiron, Ceres, Pallas, Juno, Vesta, and Pholus.
     public static var defaultAsteroids: [Asteroid] = [
-        .chiron, .ceres, .pallas, .juno, .vesta, .pholus
-    ]
+        .melpomene,
+        .calliope,
+        .thalia,
+        .euterpe,
+        .urania,
+        .polyhymnia,
+        .erato,
+        .terpsichore,
+        .clio,    ]
     
     /// The birth date and time
     public let date: Date
@@ -156,13 +163,6 @@ public struct AsteroidPositions {
         return positions[asteroid]
     }
     
-    public var chiron: Coordinate<Asteroid>? { self[.chiron] }
-    public var ceres: Coordinate<Asteroid>? { self[.ceres] }
-    public var pallas: Coordinate<Asteroid>? { self[.pallas] }
-    public var juno: Coordinate<Asteroid>? { self[.juno] }
-    public var vesta: Coordinate<Asteroid>? { self[.vesta] }
-    public var pholus: Coordinate<Asteroid>? { self[.pholus] }
-
     internal init(date: Date, asteroids: [Asteroid]) {
         var calculatedPositions = [Asteroid: Coordinate<Asteroid>]()
         asteroids.forEach {
