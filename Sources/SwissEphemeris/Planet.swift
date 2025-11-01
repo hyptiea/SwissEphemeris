@@ -9,7 +9,7 @@ import Foundation
 
 /// Models the nine celestial objects usually considered to be planets in astrological systems.
 /// The the raw `Int32` values map to the IPL planetary bodies.
-public enum Planet: Int32 {
+public enum Planet: Int32, CaseIterable {
     case sun
     case moon
     case mercury

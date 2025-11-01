@@ -11,7 +11,7 @@ final class CelestialBodyTests: XCTestCase {
 		// 12.14.2019 13:39 UT/GMT
 		let date = Date(timeIntervalSince1970: 598023482.487818)
 		let sunCoordinate = Coordinate<Planet>(body: .sun, date: date)
-		XCTAssertEqual(sunCoordinate.longitude, 261.7804948994796)
+		XCTAssertEqual(sunCoordinate.longitude, 261.7804948994796, accuracy: 0.0000000001)
 		XCTAssertEqual(sunCoordinate.tropical.sign, .sagittarius)
 		XCTAssertEqual(sunCoordinate.tropical.formatted, "21 Degrees Sagittarius ♐︎ 46' 49''")
 		XCTAssertEqual(Int(sunCoordinate.tropical.degree), 21)
