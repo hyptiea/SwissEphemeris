@@ -1,6 +1,6 @@
 //
 //  Planet.swift
-//  
+//
 //
 //  07.12.19.
 //
@@ -21,7 +21,7 @@ public enum Planet: Int32, CaseIterable {
     case neptune
     case pluto
     
-	/// The symbol commonly associated with the planet.
+    /// The symbol commonly associated with the planet.
     public var symbol: String {
         switch self {
         case .sun:
@@ -47,19 +47,19 @@ public enum Planet: Int32, CaseIterable {
         }
     }
     
-	/// The name of the planet formatted with the `symbol`.
+    /// The name of the planet formatted with the `symbol`.
     public var formatted: String {
         switch self {
         case .sun:
-            return "☉ Sun"
+            return "☉ Sonne"
         case .moon:
-            return "☾ Moon"
+            return "☾ Mond"
         case .mercury:
-            return "☿ Mercury"
+            return "☿ Merkur"
         case .venus:
             return "♀ Venus"
         case .mars:
-            return "♂️Mars"
+            return "♂️ Mars"
         case .jupiter:
             return "♃ Jupiter"
         case .saturn:
@@ -67,7 +67,7 @@ public enum Planet: Int32, CaseIterable {
         case .uranus:
             return "♅ Uranus"
         case .neptune:
-            return "♆ Neptune"
+            return "♆ Neptun"
         case .pluto:
             return "♇ Pluto"
         }
@@ -77,5 +77,5 @@ public enum Planet: Int32, CaseIterable {
 // MARK: CelestialBody Conformance
 
 extension Planet: CelestialBody {
-	public var value: Int32 { rawValue }
+    public var value: Int32 { rawValue }
 }
