@@ -20,6 +20,7 @@ public struct Asteroid: CelestialBody, Hashable {
         .erato,
         .terpsichore,
         .clio,
+        .chiron
     ]
 
     public let name: String
@@ -51,5 +52,7 @@ public extension Asteroid {
     static let erato = Asteroid.numbered(62, name: "Erato")
     static let terpsichore = Asteroid.numbered(81, name: "Terpsichore")
     static let clio = Asteroid.numbered(84, name: "Clio")
+    static let chiron = Asteroid.numbered(2066, name: "Chiron")
+
 
 }

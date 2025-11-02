@@ -21,7 +21,9 @@ public struct NatalChart {
         .polyhymnia,
         .erato,
         .terpsichore,
-        .clio,    ]
+        .clio,
+        .chiron
+    ]
     
     /// The birth date and time
     public let date: Date
