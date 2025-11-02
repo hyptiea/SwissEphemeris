@@ -138,16 +138,26 @@ public struct PlanetaryPositions {
         self.pluto = Coordinate(body: .pluto, date: date)
     }
 
-    /// Determines the house of a specific planet given a set of house cusps.
+    /// Determines the house of a specific planet given a set of house cusps and house system.
     /// - Parameters:
     ///   - planet: The planet for which to find the house.
     ///   - houseCusps: The calculated house cusps for the chart.
+    ///   - system: The house system to use.
     /// - Returns: The house number (1-12) the planet is in, or nil if not found.
-    public func house(of planet: Planet, in houseCusps: HouseCusps) -> Int? {
+    public func house(of planet: Planet, in houseCusps: HouseCusps, system: HouseSystem) -> Int? {
         guard let planetCoordinate = self.all.first(where: { $0.body == planet }) else {
             return nil
         }
-        return houseCusps.house(for: planetCoordinate.longitude)
+        switch system {
+        case .wholeSign:
+            let ascLongitude = houseCusps.ascendent.tropical.value
+            let ascSignIndex = Int(floor(ascLongitude / 30.0)) % 12
+            let planetSignIndex = Int(floor(planetCoordinate.tropical.value / 30.0)) % 12
+            let idx = (planetSignIndex - ascSignIndex + 12) % 12
+            return idx + 1
+        default:
+            return houseCusps.house(for: planetCoordinate.longitude)
+        }
     }
 }
 
@@ -184,16 +194,26 @@ public struct AsteroidPositions {
         self.positions = calculatedPositions
     }
 
-    /// Determines the house of a specific asteroid given a set of house cusps.
+    /// Determines the house of a specific asteroid given a set of house cusps and house system.
     /// - Parameters:
     ///   - asteroid: The asteroid for which to find the house.
     ///   - houseCusps: The calculated house cusps for the chart.
+    ///   - system: The house system to use.
     /// - Returns: The house number (1-12) the asteroid is in, or nil if not found.
-    public func house(of asteroid: Asteroid, in houseCusps: HouseCusps) -> Int? {
+    public func house(of asteroid: Asteroid, in houseCusps: HouseCusps, system: HouseSystem) -> Int? {
         guard let asteroidCoordinate = self.all.first(where: { $0.body == asteroid }) else {
             return nil
         }
-        return houseCusps.house(for: asteroidCoordinate.longitude)
+        switch system {
+        case .wholeSign:
+            let ascLongitude = houseCusps.ascendent.tropical.value
+            let ascSignIndex = Int(floor(ascLongitude / 30.0)) % 12
+            let asteroidSignIndex = Int(floor(asteroidCoordinate.tropical.value / 30.0)) % 12
+            let idx = (asteroidSignIndex - ascSignIndex + 12) % 12
+            return idx + 1
+        default:
+            return houseCusps.house(for: asteroidCoordinate.longitude)
+        }
     }
 }
 
