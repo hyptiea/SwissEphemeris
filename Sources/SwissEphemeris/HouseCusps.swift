@@ -54,7 +54,8 @@ public struct HouseCusps {
     private let chartLongitude: Double
     private let chartHouseSystem: HouseSystem
     private let chartJulianDate: Double
-    private let eclipticObliquity: Double // Need this from the swe_houses calculation
+    private let armcDegrees: Double
+    private let eclipticObliquityDegrees: Double
 
 	/// The preferred initializer
 	/// - Parameters:
@@ -73,14 +74,23 @@ public struct HouseCusps {
         self.chartHouseSystem = houseSystem
         self.chartJulianDate = date.julianDate()
 
-        // Allocate a buffer for the ecliptic obliquity, which is often calculated
-        // internally by swe_houses_ex2 or equivalent for the current date.
-        // For simplicity, we'll calculate it once here.
-        var nutlo = (0.0, 0.0) // nutation longitude and obliquity in degrees
-        let tjde = date.julianDate() + swe_deltat(date.julianDate())
-        var eps_mean = swi_epsiln(tjde, 0)
-        swi_nutation(tjde, 0, &nutlo.0)
-        self.eclipticObliquity = (eps_mean + nutlo.1) * (180.0 / .pi) // Convert to degrees
+        // Compute ARMC and true obliquity using public Swiss Ephemeris APIs
+        let tjdUT = self.chartJulianDate
+        let deltaT = swe_deltat(tjdUT)
+        let tjdET = tjdUT + deltaT
+        // Sidereal time in hours, convert to degrees; ARMC = sidereal time (deg) + geolon (deg)
+        let siderealTimeHours = swe_sidtime(tjdUT)
+        let siderealTimeDegrees = siderealTimeHours * 15.0
+        let rawArmc = siderealTimeDegrees + longitude
+        self.armcDegrees = fmod(rawArmc.truncatingRemainder(dividingBy: 360.0) + 360.0, 360.0)
+        // Get true obliquity via swe_calc_ut with SE_ECL_NUT and flags for radians; extract epsilon from xx[1]
+        var xx = [Double](repeating: 0.0, count: 6)
+        var serrBuffer = [CChar](repeating: 0, count: 256)
+        _ = xx.withUnsafeMutableBufferPointer { xxPtr in
+            swe_calc_ut(tjdUT, SE_ECL_NUT, SEFLG_SWIEPH | SEFLG_RADIANS, xxPtr.baseAddress, &serrBuffer)
+        }
+        let epsilonRad = xx[1] // obliquity in radians
+        self.eclipticObliquityDegrees = epsilonRad * (180.0 / .pi)
 
 		defer {
 			cuspPointer.deallocate()
@@ -107,41 +117,41 @@ public struct HouseCusps {
     /// - Parameter longitude: The ecliptic longitude of the celestial body.
     /// - Returns: The house number (1-12) the longitude falls into, or `nil` if an error occurs.
     public func house(for longitude: Double) -> Int? {
-        var armc: Double = 0.0 // Right Ascension of the Midheaven
-        var nutlo = (0.0, 0.0) // nutation longitude and obliquity in degrees
-        
-        let tjde = self.chartJulianDate + swe_deltat(self.chartJulianDate)
-        var eps_mean = swi_epsiln(tjde, 0)
-        swi_nutation(tjde, 0, &nutlo.0)
-        
-        // Calculate ARMC using swe_sidtime0, which requires UT date.
-        // swe_sidtime0 takes UT (self.date.julianDate()), corrected obliquity (eps_mean + nutlo.1), and nutation in longitude (nutlo.0)
-        // nutlo is in radians, so convert to degrees before adding to eps_mean, then swe_sidtime0 expects degrees.
-        armc = swe_degnorm(swe_sidtime0(self.chartJulianDate, (eps_mean + nutlo.1) * (180.0 / .pi), nutlo.0 * (180.0 / .pi)) * 15 + self.chartLongitude)
-
         // The swe_house_pos function takes a CChar for the house system.
-        // We'll pass the raw value of our HouseSystem enum.
         let hsysCChar = self.chartHouseSystem.rawValue
 
         var xpin: (Double, Double) = (longitude, 0.0) // Ecliptic longitude and latitude (0 for house calculation)
         var serr = "" // Buffer for error message
+        var charSerr = [CChar](repeating: 0, count: 256) // C-style buffer for C function
 
+        // Copy Swift string to C-style char array
+        _ = serr.utf8CString.withUnsafeBufferPointer { (ptr) in
+            // Ensure we don't write more than the buffer can hold
+            let count = min(ptr.count, charSerr.count - 1)
+            charSerr.withUnsafeMutableBufferPointer { bufferPtr in
+                _ = memcpy(bufferPtr.baseAddress, ptr.baseAddress, count)
+                bufferPtr[count] = 0 // Null-terminate
+            }
+        }
+        
         // call swe_house_pos, which returns a double (house number, possibly with decimal)
+        // Ensure to pass charSerr as an UnsafeMutablePointer<CChar>
         let housePos = withUnsafeMutablePointer(to: &xpin.0) { xpinPtr in
             swe_house_pos(
-                armc,
+                self.armcDegrees, // Use the pre-calculated ARMC degrees
                 self.chartLatitude,
-                self.eclipticObliquity,
+                self.eclipticObliquityDegrees, // Use the pre-calculated obliquity degrees
                 hsysCChar,
                 xpinPtr,
-                &serr
+                &charSerr // Pass C-style error buffer
             )
         }
 
-        if housePos.isNaN || housePos == 0.0 || !serr.isEmpty {
+        // Convert C-style char array back to Swift String for inspection
+        serr = String(cString: charSerr)
+
+        if housePos.isNaN || housePos == 0.0 || !serr.filter({ $0 != "\0" }).isEmpty { // Filter null bytes before checking if empty
             // handle error if swe_house_pos returns an invalid result or an error message
-            // In C, 0 can indicate an error or an invalid position for some house systems.
-            // Check the serr for actual error messages.
             print("Error calculating house position: \(serr)")
             return nil
         }
@@ -151,3 +161,4 @@ public struct HouseCusps {
         return Int(ceil(housePos))
     }
 }
+
