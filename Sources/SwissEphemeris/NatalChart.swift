@@ -30,7 +30,6 @@ public struct NatalChart {
     
     /// The birth location latitude
     public let latitude: Double
-    
     /// The birth location longitude
     public let longitude: Double
     
@@ -138,6 +137,18 @@ public struct PlanetaryPositions {
         self.neptune = Coordinate(body: .neptune, date: date)
         self.pluto = Coordinate(body: .pluto, date: date)
     }
+
+    /// Determines the house of a specific planet given a set of house cusps.
+    /// - Parameters:
+    ///   - planet: The planet for which to find the house.
+    ///   - houseCusps: The calculated house cusps for the chart.
+    /// - Returns: The house number (1-12) the planet is in, or nil if not found.
+    public func house(of planet: Planet, in houseCusps: HouseCusps) -> Int? {
+        guard let planetCoordinate = self.all.first(where: { $0.body == planet }) else {
+            return nil
+        }
+        return houseCusps.house(for: planetCoordinate.longitude)
+    }
 }
 
 /// Contains lunar node positions
@@ -172,6 +183,18 @@ public struct AsteroidPositions {
         }
         self.positions = calculatedPositions
     }
+
+    /// Determines the house of a specific asteroid given a set of house cusps.
+    /// - Parameters:
+    ///   - asteroid: The asteroid for which to find the house.
+    ///   - houseCusps: The calculated house cusps for the chart.
+    /// - Returns: The house number (1-12) the asteroid is in, or nil if not found.
+    public func house(of asteroid: Asteroid, in houseCusps: HouseCusps) -> Int? {
+        guard let asteroidCoordinate = self.all.first(where: { $0.body == asteroid }) else {
+            return nil
+        }
+        return houseCusps.house(for: asteroidCoordinate.longitude)
+    }
 }
 
 /// Information about an aspect between two planets
@@ -196,3 +219,4 @@ public struct AspectInfo {
         false
     }
 }
+
