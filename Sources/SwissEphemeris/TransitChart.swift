@@ -25,6 +25,9 @@ public struct TransitChart {
     /// Current asteroid positions
     public let transitAsteroids: AsteroidPositions
     
+    /// Current house cusps for the transit time
+    public let transitHouses: HouseCusps
+    
     /// Aspects between transiting planets and natal planets
     public let transitAspects: [TransitAspectInfo]
     
@@ -46,6 +49,12 @@ public struct TransitChart {
         // Calculate transit asteroids using the same list from the natal chart.
         let asteroidsForTransit = natalChart.asteroids.all.map { $0.body }
         self.transitAsteroids = AsteroidPositions(date: transitDate, asteroids: asteroidsForTransit)
+        
+        // Calculate transit houses using the same location and house system as natal chart
+        self.transitHouses = HouseCusps(date: transitDate, 
+                                      latitude: natalChart.latitude, 
+                                      longitude: natalChart.longitude, 
+                                      houseSystem: natalChart.houseSystem)
         
         // Calculate transit aspects
         var calculatedTransitAspects: [TransitAspectInfo] = []
@@ -85,6 +94,50 @@ public struct TransitChart {
     public func transitsFrom(_ transitPlanet: Planet) -> [TransitAspectInfo] {
         return transitAspects.filter { $0.transitPlanet == transitPlanet }
     }
+    
+    /// Determines the house of a transiting planet
+    /// - Parameter planet: The transiting planet for which to find the house
+    /// - Returns: The house number (1-12) the planet is in, or nil if not found
+    public func house(for planet: Planet) -> Int? {
+        return transitPlanets.house(of: planet, in: transitHouses, system: natalChart.houseSystem)
+    }
+    
+    /// Determines the house of a transiting asteroid
+    /// - Parameter asteroid: The transiting asteroid for which to find the house
+    /// - Returns: The house number (1-12) the asteroid is in, or nil if not found
+    public func house(for asteroid: Asteroid) -> Int? {
+        return transitAsteroids.house(of: asteroid, in: transitHouses, system: natalChart.houseSystem)
+    }
+    
+    /// Determines the house of a transiting lunar node
+    /// - Parameter nodeType: The type of lunar node (true or mean)
+    /// - Returns: The house number (1-12) the node is in, or nil if not found
+    public func house(for nodeType: LunarNodeType) -> Int? {
+        let nodeCoordinate: Coordinate<LunarNorthNode>
+        switch nodeType {
+        case .trueNode:
+            nodeCoordinate = transitLunarNodes.trueNode
+        case .meanNode:
+            nodeCoordinate = transitLunarNodes.meanNode
+        }
+        
+        switch natalChart.houseSystem {
+        case .wholeSign:
+            let ascLongitude = transitHouses.ascendent.tropical.value
+            let ascSignIndex = Int(floor(ascLongitude / 30.0)) % 12
+            let nodeSignIndex = Int(floor(nodeCoordinate.tropical.value / 30.0)) % 12
+            let idx = (nodeSignIndex - ascSignIndex + 12) % 12
+            return idx + 1
+        default:
+            return transitHouses.house(for: nodeCoordinate.longitude)
+        }
+    }
+}
+
+/// Enum to specify which type of lunar node
+public enum LunarNodeType {
+    case trueNode
+    case meanNode
 }
 
 /// Information about a transit aspect between a transiting planet and natal planet
